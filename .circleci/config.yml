@@ -183,13 +183,13 @@ jobs:
             - install_awscli
             - install_ansible
       - run:
-          name: Configure server
+          name: Configure server Ansible play
           command: |
             cd .circleci/ansible
             cat inventory.txt
 
             ansible-playbook -i inventory.txt configure-server.yml
-        - destroy-environment   
+       - destroy-environment   
 
   
       
