@@ -168,6 +168,32 @@ jobs:
           paths: [backend/node_modules]
           key: backend-deps
 
+  configure-infrastructure:
+    docker:
+      cimg/python:3.10
+    steps:
+      - checkout
+      - add_ssh_keys:
+          1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            - install_awscli
+            - install_ansible
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+
+            ansible-playbook -i inventory.txt configure-server.yml
+       - destroy-environments   
+
+  
+      
+
 workflows:
   default:
     jobs:
@@ -181,8 +207,10 @@ workflows:
       #     requires: [build-backend]
       # - scan-frontend:
       #     requires: [build-frontend]
-      - deploy-infrastructure
-        # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-        # filters:
-        #   branches:
-        #     only: [master]
+      # - deploy-infrastructure:
+      #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: [master]
+       - configure-infrastructure
+          # requires: [deploy-infrastructure]
