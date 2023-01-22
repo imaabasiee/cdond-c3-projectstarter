@@ -173,15 +173,14 @@ jobs:
       - image: cimg/python:3.10
     steps:
       - checkout
+      - install_awscli
+      - install_ansible
+
       - add_ssh_keys:
           1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            - install_awscli
-            - install_ansible
+
       - run:
           name: Configure server Ansible play
           command: |
