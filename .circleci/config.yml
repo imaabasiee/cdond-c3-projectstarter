@@ -185,12 +185,12 @@ jobs:
       - install_ansible
 
       - add_ssh_keys:
-          1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1
+           fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
       - attach_workspace:
           at: ~/
 
       - run:
-          name: Configure server Ansible play
+          name: Run Configure Server Ansible play
           command: |
             cd .circleci/ansible
             cat inventory.txt
