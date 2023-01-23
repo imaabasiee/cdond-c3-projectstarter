@@ -1,6 +1,24 @@
 version: 2.1
 
 commands:
+  install_awscli:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+  install_ansible:
+    description: Install Ansible
+    steps:
+      - run:
+          name: Install Ansible
+          command: |
+            python3 -m pip install --user ansible
+
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -12,13 +30,10 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            # Empty frontend bucket
             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
 
-            # Delete frontend stack
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
 
-            # Delete backend stack
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>
 
   install_nodejs:
@@ -55,25 +70,6 @@ commands:
               npm install
               npm run migration:revert
             fi
-
-  install_awscli:
-    description: Install AWS CLI v2
-    steps:
-      - run:
-          name: Install AWS CLI v2
-          command: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-
-  install_ansible:
-    description: Install Ansible
-    steps:
-      - run:
-          name: Install Ansible
-          command: |
-            python3 -m pip install --user ansible
-
 jobs:
   build-frontend:
     docker:
@@ -262,40 +258,6 @@ jobs:
       - destroy-environment
       - revert-migrations
 
-  deploy-frontend:
-    docker:
-      - image: cimg/python:3.10
-    steps:
-      - checkout
-      - install_awscli
-      - install_nodejs
-      - run:
-          name: Install dependencies
-          command: |
-            cd frontend
-            npm install
-      - run:
-          name: Get backend url
-          command: |
-            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text)
-
-              echo "API_URL=http://${BACKEND_PUBLIC_IP}:3030" >> frontend/.env
-              cat frontend/.env
-
-      - run:
-          name: Deploy frontend objects
-          command: |
-            cd frontend
-            npm run build
-            # tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-
-      - destroy-environment
-      - revert-migrations
-
   deploy-backend:
     docker:
       - image: cimg/python:3.10
@@ -305,26 +267,26 @@ jobs:
       - install_nodejs
       - install_ansible
       - add_ssh_keys:
-          fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
+          fingerprints:
+            - "15:71:24:06:04:09:fb:98:a5:85:17:31:e3:40:8b:03"
+
       - attach_workspace:
           at: ~/
-      - run:
-          name: Install dependencies
-          command: |
-            cd backend
-            npm install
+      - restore_cache:
+          keys: [backend-build]
+
       - run:
           name: Deploy backend
           command: |
             cd backend
-            npm i
+            npm install --legacy-peer-deps
             npm run build
             cd ..
-            # Zip the directory
             tar -C backend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
-            echo "Contents  of the inventory.txt file is -------"
-            cat inventory.txt
+            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
 
       - destroy-environment
@@ -355,4 +317,4 @@ workflows:
       - deploy-frontend:
           requires: [run-migrations]
       - deploy-backend:
-          requires: [run-migrations]
+          requires: [run-migrations, deploy-frontend]
