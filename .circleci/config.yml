@@ -21,8 +21,6 @@ commands:
             # Delete backend stack
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>
 
-            
-
   install_nodejs:
     description: Install Node.js 13.8.0
     steps:
@@ -37,7 +35,6 @@ commands:
             sudo npm install --global n
             sudo n 13.8.0
 
-            
   revert-migrations:
     description: Revert the last migration, if any were executed during the current workflow
     parameters:
@@ -223,7 +220,7 @@ jobs:
       - install_ansible
 
       - add_ssh_keys:
-           fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
+          fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
       - attach_workspace:
           at: ~/
 
@@ -234,7 +231,7 @@ jobs:
             cat inventory.txt
 
             ansible-playbook -i inventory.txt configure-server.yml
-      - destroy-environment   
+      - destroy-environment
 
   run-migrations:
     docker:
@@ -261,9 +258,9 @@ jobs:
             else
               echo "No migrations are pending"
             fi
-            
+
       - destroy-environment
-      - revert-migrations 
+      - revert-migrations
 
   deploy-frontend:
     docker:
@@ -287,7 +284,7 @@ jobs:
 
               echo "API_URL=http://${BACKEND_PUBLIC_IP}:3030" >> frontend/.env
               cat frontend/.env
-            
+
       - run:
           name: Deploy frontend objects
           command: |
@@ -297,8 +294,8 @@ jobs:
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
       - destroy-environment
-      - revert-migrations      
-                    
+      - revert-migrations
+
   deploy-backend:
     docker:
       - image: cimg/python:3.10
@@ -308,7 +305,7 @@ jobs:
       - install_nodejs
       - install_ansible
       - add_ssh_keys:
-           fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
+          fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
       - attach_workspace:
           at: ~/
       - run:
@@ -328,13 +325,10 @@ jobs:
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml  
- 
-      - destroy-environment
-      - revert-migrations         
+            ansible-playbook -i inventory.txt deploy-backend.yml
 
-  
-      
+      - destroy-environment
+      - revert-migrations
 
 workflows:
   default:
@@ -350,12 +344,12 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:
-            requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-            filters:
-              branches:
-                only: [master]
+          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [master]
       - configure-infrastructure:
-            requires: [deploy-infrastructure]
+          requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
