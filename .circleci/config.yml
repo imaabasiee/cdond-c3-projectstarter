@@ -32,9 +32,9 @@ commands:
           command: |
             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
 
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.Workflow_ID >>
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.Workflow_ID>>
 
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.Workflow_ID >>
+            aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.Workflow_ID>>
 
   install_nodejs:
     description: Install Node.js 13.8.0
@@ -295,18 +295,21 @@ jobs:
       - image: cimg/python:3.10
     steps:
       - checkout
-      - install_awscli
-      - install_nodejs
-      - install_ansible
       - add_ssh_keys:
           fingerprints:
             - "1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"
 
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys: [backend-build]
-
+      # - restore_cache:
+      #     keys: [backend-build]
+      - run:
+            name: Install dependencies
+            command: |
+              apk add --update --no-cache ansible
+              apk add --update --no-cache tar gzip
+              apk add --update --no-cache nodejs npm
+              apk add --update --no-cache aws-cli curl
       - run:
           name: Deploy backend
           command: |
