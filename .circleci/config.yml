@@ -326,12 +326,16 @@ jobs:
 
   smoke-test:
     docker:
-      - image: cimg/base:stable
+      # Docker image that support job tasks
+      - image: python:3.10-alpine3.16
     steps:
+      # Checkout code from git
       - checkout
-      - install_awscli
-      - install_nodejs
-      # command
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache tar gzip curl aws-cli nodejs npm
+            
       - run:
           name: Backend smoke test.
           command: |
