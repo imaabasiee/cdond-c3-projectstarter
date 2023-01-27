@@ -328,7 +328,7 @@ jobs:
       - checkout
       - install_awscli
       - install_nodejs
-
+      # command
       - run:
           name: Backend smoke test.
           command: |
