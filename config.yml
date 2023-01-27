@@ -203,7 +203,42 @@ jobs:
           name: Deploy backend
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure 
+
+      deploy-backend:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - install_awscli
+      - install_nodejs
+      - install_ansible
+      - add_ssh_keys:
+          fingerprints:
+            - "15:71:24:06:04:09:fb:98:a5:85:17:31:e3:40:8b:03"
+
+      - attach_workspace:
+          at: ~/
+      - restore_cache:
+          keys: [backend-build]
+
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm install --legacy-peer-deps
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
+            cd .circleci/ansible
+            echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
+            ansible-playbook -i inventory.txt deploy-backend.yml
+
+      - destroy-environment
+      - revert-migrations
+ 
 
   smoke-test:
     docker:
