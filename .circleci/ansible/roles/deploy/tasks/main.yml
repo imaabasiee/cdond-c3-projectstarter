@@ -1,38 +1,24 @@
 ---
-- name: "update local repository"
-  become: true
+- name: Update
+  become: yes
   apt:
     update_cache: yes
-- name: remove stale dependencies
-  become: true
+- name: remove unneeded deps
+  become: yes
   apt:
     autoremove: yes
 - name: "upgrade packages"
-  become: true
+  become: yes
   apt:
     upgrade: yes
-- name: "install nodejs and npm"
-  become: true
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
-- name: "install pm2"
-  become: true
-  npm:
-    name: pm2
-    global: yes
-    production: yes
-    state: present
-- name: unarchive zip
-  become: true
+- name: Unarchive files
+  become: yes
   unarchive:
     src: "files/artifact.tar.gz"
     dest: .
-- name: "Start Backend App"
-  become: true
+- name: "Start application"
+  become: yes
   shell: |
     npm install
-    npm run build
     pm2 stop default
     pm2 start npm -- start
