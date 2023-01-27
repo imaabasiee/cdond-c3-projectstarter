@@ -294,7 +294,6 @@ jobs:
             # tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
-
   deploy-backend:
     docker:
       - image: cimg/python:3.10
@@ -305,7 +304,7 @@ jobs:
       - install_ansible
       - add_ssh_keys:
           fingerprints:
-            - "15:71:24:06:04:09:fb:98:a5:85:17:31:e3:40:8b:03"
+            - "1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"
 
       - attach_workspace:
           at: ~/
@@ -320,12 +319,12 @@ jobs:
             npm run build
             cd ..
             tar -C backend -czvf artifact.tar.gz .
-            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mkdir .circleci/ansible/roles/deploy/files/
             mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
             echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
- 
+
   smoke-test:
     docker:
       - image: cimg/base:stable
@@ -360,7 +359,6 @@ jobs:
               exit 1
             fi
       - destroy-environment
-
 
 workflows:
   default:
