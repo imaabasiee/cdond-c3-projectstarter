@@ -251,7 +251,6 @@ jobs:
               echo "No migrations are pending"
             fi
       # rollback config
-      - destroy-environment
       - revert-migrations
 
   deploy-frontend:
@@ -281,6 +280,9 @@ jobs:
 
             echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" >> frontend/.env
             cat frontend/.env
+
+      - destroy-environment
+      - revert-migrations
 
       - run:
           name: Deploy frontend objects
@@ -324,6 +326,9 @@ jobs:
             echo "Contents of the inventory.txt file is ------$(cat inventory.txt)"
             ansible-playbook -i inventory.txt deploy-backend.yml
 
+      - destroy-environment
+      - revert-migrations
+
   smoke-test:
     docker:
       # Docker image that support job tasks
@@ -345,7 +350,7 @@ jobs:
               --output text)
             export API_URL="http://${BACKEND_PUBLIC_IP}:3030"
             echo $API_URL
-            echo "Wait for Server to accept GET connection request:"
+            echo "wait for server to connect:"
             sleep 60
             if [[ 'ok' =~ $(curl -s --connect-timeout 5 ${API_URL}/api/status | grep -o ok) ]];then return 0 else return 1;fi
 
@@ -360,6 +365,8 @@ jobs:
               exit 1
             fi
       - destroy-environment
+      - revert-migrations
+
 
 workflows:
   default:
