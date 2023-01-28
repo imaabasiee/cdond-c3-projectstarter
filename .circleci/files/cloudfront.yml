@@ -1,14 +1,11 @@
-Description: >
-  Cloudfront distribution for UdaPeople.
+Description: Michael Agbiaowei/ Cloudfront distribution for UdaPeople.
 
 Parameters:
   WorkflowID:
     Description: Unique identifier.
     Type: String
 
-
 Resources:
-  
   CloudFrontOriginAccessIdentity:
     Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
     Properties:
@@ -38,4 +35,3 @@ Outputs:
     Description: URL for website hosted on S3
     Export:
       Name: WorkflowID
-
