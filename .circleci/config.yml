@@ -246,7 +246,7 @@ jobs:
       - install_ansible
 
       - add_ssh_keys:
-          fingerprints: ["15:71:24:06:04:09:fb:98:a5:85:17:31:e3:40:8b:03"]
+          fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
       - attach_workspace:
           at: ~/
       - run:
@@ -338,7 +338,7 @@ jobs:
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["15:71:24:06:04:09:fb:98:a5:85:17:31:e3:40:8b:03"]
+          fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
       - run:
           name: Install dependencies
           command: |
@@ -430,7 +430,7 @@ jobs:
 
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
-            --stack-name udapeople-cloudfront \
+            --stack-name InitialStack \
             --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
 
       - revert-migrations
