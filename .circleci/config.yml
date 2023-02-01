@@ -9,7 +9,7 @@ commands:
     parameters:
       Workflow_ID:
         type: string
-        default: 175bdf8
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
     steps:
       - run:
           name: Revert migrations
@@ -29,7 +29,7 @@ commands:
     parameters:
       workflow_id:
         type: string
-        default: "175bdf8"
+        default: "${CIRCLE_WORKFLOW_ID:0:7}"
     steps:
       - run:
           name: Destroy environments
@@ -45,7 +45,7 @@ commands:
     parameters:
       bucket_name:
         type: string
-        default: "175bdf8"
+        default: "${CIRCLE_WORKFLOW_ID:0:7}"
     steps:
       - run:
           name: Remove contents of bucket
@@ -213,21 +213,21 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project=udapeople \
-              --stack-name "udapeople-backend-175bdf8" \
-              --parameter-overrides ID="175bdf8"
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-              --stack-name "udapeople-frontend-175bdf8" \
-              --parameter-overrides ID="175bdf8"
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=backend-175bdf8" \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Reservations[*].Instances[*].PublicIpAddress" \
             --output text >> .circleci/ansible/inventory.txt
       - persist_to_workspace:
@@ -235,7 +235,7 @@ jobs:
           paths:
             - project/.circleci/ansible/inventory.txt
 
-      # - destroy-environment
+      - destroy-environment
 
   configure-infrastructure:
     docker:
@@ -247,15 +247,8 @@ jobs:
 
       - add_ssh_keys:
           fingerprints: ["1c:9a:16:88:e3:93:10:9f:76:f0:e0:70:fe:0e:d5:e1"]
-      # - attach_workspace:
-      #     at: ~/
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=backend-175bdf8" \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text >> .circleci/ansible/inventory.txt
+      - attach_workspace:
+          at: ~/
       - run:
           name: Configure server
           command: |
@@ -263,8 +256,8 @@ jobs:
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
 
-      # - remove-bucket-contents
-      # - destroy-environment
+      - remove-bucket-contents
+      - destroy-environment
 
   run-migrations:
     docker:
@@ -286,12 +279,12 @@ jobs:
             ls ~/
             if [[ 'has been executed successfully.' =~ $(grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt | uniq) ]]
             then
-                curl -k https://kvdb.io/WQLuSz5y1sei2a3EA5L5xS/migration_175bdf8 -d '1'
+                curl -k https://kvdb.io/WQLuSz5y1sei2a3EA5L5xS/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
   deploy-frontend:
     docker:
@@ -305,18 +298,18 @@ jobs:
             # your code here
             sudo apt update && \
             sudo apt install -y tar gzip curl
-      # - run:
-      #     name: Install npm
-      #     command: |
-      #       # your code here
-      # - attach_workspace:
-      #     at: ~/
+      - run:
+          name: Install npm
+          command: |
+            # your code here
+      - attach_workspace:
+          at: ~/
       - run:
           name: Get backend url
           command: |
             # your code here
             export BACKEND_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=backend-175bdf8" \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Reservations[*].Instances[*].PublicIpAddress" \
             --output text)
 
@@ -332,12 +325,12 @@ jobs:
             cd frontend
             npm install
             npm run build
-            tar -czvf artifact-"175bdf8".tar.gz dist
-            aws s3 cp dist s3://udapeople-175bdf8 --recursive
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
   deploy-backend:
     docker:
@@ -352,16 +345,8 @@ jobs:
             apk add --update --no-cache tar gzip nodejs npm aws-cli ansible
       - restore_cache:
           keys: [backend-build]
-      # - attach_workspace:
-      #     at: ~/
-
-      - run:
-          name: Add back-end ip to ansible inventory
-          command: |
-            aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=backend-175bdf8" \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text >> .circleci/ansible/inventory.txt
+      - attach_workspace:
+          at: ~/
       - run:
           name: Deploy backend
           command: |
@@ -378,9 +363,9 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
   smoke-test:
     docker:
@@ -395,7 +380,7 @@ jobs:
           command: |
             sudo apt install curl -y
             BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
-              --filters "Name=tag:Name,Values=backend-175bdf8" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
 
@@ -406,7 +391,7 @@ jobs:
       - run:
           name: Frontend smoke test.
           command: |
-            FRONTEND_WEBSITE=http://udapeople-175bdf8.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com
+            FRONTEND_WEBSITE=http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website.${AWS_DEFAULT_REGION}.amazonaws.com
             if curl -s $FRONTEND_WEBSITE -v | grep "Welcome"
             then
               # This is the intentional error, if "Welcome" is indeed in the response this step will exit with exit code 1
@@ -415,9 +400,9 @@ jobs:
               exit 1
             fi
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
   cloudfront-update:
     docker:
@@ -446,11 +431,11 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
-            --parameter-overrides WorkflowID=175bdf8 \
+            --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID:0:7} \
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
   cleanup:
     docker:
@@ -465,18 +450,18 @@ jobs:
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
                 --no-paginate --output text)
             echo OldWorkflowID: "${OldWorkflowID}"
-            echo CIRCLE_WORKFLOW_ID "175bdf8"
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
             # Fetch the stack names
             export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
             --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
             STACKSID=($(aws cloudformation describe-stacks --query "Stacks[*].Outputs[?OutputKey==\`ID\`].OutputValue" --no-paginate --output text))
             echo Stack ids: "${STACKSID[@]}"
             echo Stack names: "${STACKS[@]}"
-            echo $OldWorkflowID 175bdf8
+            echo $OldWorkflowID ${CIRCLE_WORKFLOW_ID:0:7}
 
             for (( index=0; index<${#STACKS[@]}; index+=2 )) 
             do
-              if [[ "175bdf8" != "${STACKS[index]##*-}" ]]
+              if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${STACKS[index]##*-}" ]]
               then
                   # your code here
                   echo "----------Deletes cofirmed------------"
@@ -488,9 +473,9 @@ jobs:
               fi
             done
 
-      # - revert-migrations
-      # - remove-bucket-contents
-      # - destroy-environment
+      - revert-migrations
+      - remove-bucket-contents
+      - destroy-environment
 
 workflows:
   udapeople_app_workflow:
@@ -526,21 +511,21 @@ workflows:
       # - scan-frontend:
       #     requires: [build-frontend]
       #     filters:
-      #       branches:s
+      #       branches:
       #         only: [test-branch]
       # - deploy-infrastructure:
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      - configure-infrastructure
-        # requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
-      - deploy-backend:
-          requires: [run-migrations, deploy-frontend]
-      - cloudfront-update:
-          requires: [deploy-backend]
-      - smoke-test:
-          requires: [cloudfront-update]
-      - cleanup:
-          requires: [smoke-test]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      # - deploy-backend:
+      #     requires: [run-migrations, deploy-frontend]
+      # - cloudfront-update:
+      #     requires: [deploy-backend]
+      # - smoke-test:
+      #     requires: [cloudfront-update]
+      # - cleanup:
+      #     requires: [smoke-test]
