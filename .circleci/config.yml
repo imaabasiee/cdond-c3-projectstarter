@@ -305,10 +305,10 @@ jobs:
             # your code here
             sudo apt update && \
             sudo apt install -y tar gzip curl
-      - run:
-          name: Install npm
-          command: |
-            # your code here
+      # - run:
+      #     name: Install npm
+      #     command: |
+      #       # your code here
       # - attach_workspace:
       #     at: ~/
       - run:
